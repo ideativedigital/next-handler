@@ -1,0 +1,35 @@
+---
+title: Getting Started
+description: Install next-handler and wire the basic API route pattern.
+category: Getting Started
+tags:
+  - setup
+  - nextjs
+difficulty: beginner
+updatedAt: 2026-03-04
+---
+
+Use `@ideative/next-handler` to centralize route error handling and payload parsing.
+
+## Install
+
+```bash
+pnpm add @ideative/next-handler
+```
+
+## First route
+
+```ts
+import { NextResponse } from "next/server";
+import { withApiHandler, payload } from "@ideative/next-handler";
+import { z } from "zod";
+
+const schema = z.object({
+  email: z.string().email(),
+});
+
+export const POST = withApiHandler(async () => {
+  const body = await payload(schema);
+  return NextResponse.json({ ok: true, body });
+});
+```

@@ -1,0 +1,23 @@
+---
+title: Throw Typed API Errors
+description: Return consistent HTTP responses by throwing built-in endpoint errors.
+category: API Errors
+tags:
+  - backend
+  - errors
+difficulty: beginner
+updatedAt: 2026-03-04
+---
+
+Throw `EndpointError` subclasses in handlers wrapped by `withApiHandler()`.
+
+```ts
+import { withApiHandler, UnauthorizedError, NotFoundError } from "@ideative/next-handler";
+
+export const GET = withApiHandler(async (req) => {
+  if (!req.headers.get("authorization")) throw new UnauthorizedError("Missing token");
+  throw new NotFoundError("User");
+});
+```
+
+The wrapper serializes known errors with status codes (`401`, `404`, etc.) so your API wire format stays consistent.

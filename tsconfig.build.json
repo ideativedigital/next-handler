@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "incremental": false,
+    "declaration": true,
+    "declarationMap": true,
+    "jsx": "react-jsx",
+    "outDir": "dist",
+    "rootDir": "src",
+    "types": []
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.stub.ts", "src/__mocks__"]
+}

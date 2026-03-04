@@ -1,0 +1,27 @@
+---
+title: Use Translated Error Variants
+description: Generate i18n-ready errors with translation keys and params for client rendering.
+category: Intl
+tags:
+  - next-intl
+  - i18n
+difficulty: intermediate
+updatedAt: 2026-03-04
+---
+
+Use helpers from `@ideative/next-handler/intl` to create translated error variants:
+
+```ts
+import { generateTranslatedErrors } from "@ideative/next-handler/intl";
+
+const errors = generateTranslatedErrors({
+  notFound: "errors.notFound" as any,
+  badRequest: "errors.badRequest" as any,
+  forbidden: "errors.forbidden" as any,
+  internalServer: "errors.internalServer" as any,
+});
+
+throw errors.notFound("User", { id: 42 });
+```
+
+These still round-trip through `serializeApiError` / `deserializeApiError`, while carrying `translationKey` and `params`.

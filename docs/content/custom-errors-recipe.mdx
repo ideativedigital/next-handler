@@ -1,0 +1,31 @@
+---
+title: Register Custom Error Types
+description: Add domain-specific errors that serialize and deserialize across server and client.
+category: API Errors
+tags:
+  - custom-errors
+  - registry
+difficulty: intermediate
+updatedAt: 2026-03-04
+---
+
+Create an `EndpointError` subclass and register a deserializer:
+
+```ts
+import { EndpointError, apiErrorFactory } from "@ideative/next-handler";
+
+class PaymentRequiredError extends EndpointError {
+  static ErrorName() {
+    return "PaymentRequiredError";
+  }
+  constructor(message = "Payment required") {
+    super(PaymentRequiredError.ErrorName(), 402, message);
+    this.name = PaymentRequiredError.ErrorName();
+  }
+}
+
+apiErrorFactory.register(
+  PaymentRequiredError,
+  (d) => new PaymentRequiredError(d.message)
+);
+```

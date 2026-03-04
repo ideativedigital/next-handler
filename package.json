@@ -1,0 +1,92 @@
+{
+  "name": "@ideative/next-handler",
+  "version": "0.0.1",
+  "description": "Next Handler - Simple Next.js handler for API routes",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./api-errors": {
+      "types": "./dist/api-errors.d.ts",
+      "import": "./dist/api-errors.js",
+      "default": "./dist/api-errors.js"
+    },
+    "./intl": {
+      "types": "./dist/intl/index.d.ts",
+      "import": "./dist/intl/index.js",
+      "default": "./dist/intl/index.js"
+    },
+    "./intl/intl-context": {
+      "types": "./dist/intl/intl-context/index.d.ts",
+      "import": "./dist/intl/intl-context/index.js",
+      "default": "./dist/intl/intl-context/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "test": "ava --node-arguments='--import=tsx'",
+    "prepublishOnly": "pnpm run build",
+    "docs:dev": "pnpm --dir docs dev",
+    "docs:build": "pnpm --dir docs build",
+    "docs:preview": "pnpm --dir docs preview"
+  },
+  "ava": {
+    "files": [
+      "__tests__/**/*.test.ts"
+    ],
+    "extensions": [
+      "ts"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/acominotto/next-handler"
+  },
+  "author": {
+    "name": "Adrien Cominotto",
+    "email": "adrien.cominotto@gmail.com",
+    "url": "https://github.com/acominotto"
+  },
+  "license": "ISC",
+  "peerDependencies": {
+    "next": ">=15.0.0",
+    "next-intl": ">=4.8.2",
+    "react": ">=19.2.4",
+    "zod": ">=4.3.6"
+  },
+  "engines": {
+    "node": ">=22.10.1",
+    "pnpm": ">=10.26.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/react": "^19.2.13",
+    "ava": "^6.0.0",
+    "ky": "^1.7.2",
+    "next": ">=15.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "zod": ">=4.3.6"
+  },
+  "keywords": [
+    "next",
+    "nextjs",
+    "api",
+    "api-routes",
+    "endpoint",
+    "zod",
+    "payload",
+    "api-handler",
+    "errors",
+    "error",
+    "error-handling",
+    "error-serialization"
+  ]
+}

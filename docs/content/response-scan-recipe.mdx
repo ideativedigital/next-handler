@@ -1,0 +1,67 @@
+---
+title: Scan Responses and Rethrow Serialized Errors
+description: Re-throw typed API errors from Fetch responses and adapt the same pattern to ky or axios.
+category: Frontend Integration
+tags:
+  - fetch
+  - deserialization
+difficulty: intermediate
+updatedAt: 2026-03-04
+---
+
+Use `scanResponseAndThrowErrors()` on non-OK responses to deserialize and throw typed errors.
+
+```ts
+import { scanResponseAndThrowErrors } from "@ideative/next-handler";
+
+const response = await fetch("/api/users/123");
+await scanResponseAndThrowErrors(response);
+
+if (!response.ok) {
+  throw new Error(response.statusText);
+}
+
+const data = await response.json();
+```
+
+For `ky`, call the same function inside `afterResponse`:
+
+```ts
+import ky from "ky";
+import { scanResponseAndThrowErrors } from "@ideative/next-handler";
+
+const api = ky.create({
+  hooks: {
+    afterResponse: [
+      async (_request, _options, response) => {
+        await scanResponseAndThrowErrors(response);
+        if (!response.ok) throw new Error(response.statusText);
+        return response;
+      },
+    ],
+  },
+});
+```
+
+For `axios`, deserialize from `err.response.data` and rethrow:
+
+```ts
+import axios from "axios";
+import { deserializeApiError } from "@ideative/next-handler";
+
+const api = axios.create({ baseURL: "/api" });
+
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (!axios.isAxiosError(err) || !err.response) return Promise.reject(err);
+    const data = err.response.data;
+    const candidate =
+      typeof data === "object" && data !== null && "error" in data
+        ? (data as { error: unknown }).error
+        : data;
+    const apiError = deserializeApiError(candidate);
+    return Promise.reject(apiError ?? err);
+  }
+);
+```

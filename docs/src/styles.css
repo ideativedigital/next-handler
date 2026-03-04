@@ -1,0 +1,108 @@
+:root {
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  line-height: 1.5;
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: #1d4ed8;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  border-right: 1px solid #cbd5e1;
+  background: #fff;
+  padding: 1.5rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: auto;
+}
+
+.category {
+  margin-top: 1rem;
+}
+
+.category h2 {
+  margin: 0 0 0.25rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.category ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.content {
+  max-width: 920px;
+  padding: 2rem;
+}
+
+.page-header {
+  margin-bottom: 1.5rem;
+}
+
+.pill {
+  display: inline-block;
+  background: #dbeafe;
+  color: #1e3a8a;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 1rem;
+  background: #fff;
+}
+
+pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+@media (max-width: 980px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid #cbd5e1;
+  }
+}
