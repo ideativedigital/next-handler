@@ -1,5 +1,11 @@
 # @ideative/next-handler
 
+[![Docs](https://img.shields.io/badge/docs-github%20pages-0a66c2)](https://ideativedigital.github.io/next-handler/)
+[![Coverage Statements](https://img.shields.io/badge/statements-94.81%25-brightgreen)](#coverage)
+[![Coverage Branches](https://img.shields.io/badge/branches-90.51%25-brightgreen)](#coverage)
+[![Coverage Functions](https://img.shields.io/badge/functions-96.05%25-brightgreen)](#coverage)
+[![Coverage Lines](https://img.shields.io/badge/lines-94.81%25-brightgreen)](#coverage)
+
 Typed helpers for Next.js route handlers with:
 
 - request context access (`getRequest()`),
@@ -48,7 +54,8 @@ import {
 } from "@ideative/next-handler";
 
 export const GET = withApiHandler(async (req) => {
-  if (!req.headers.get("authorization")) throw new UnauthorizedError("Missing token");
+  if (!req.headers.get("authorization"))
+    throw new UnauthorizedError("Missing token");
   throw new NotFoundError("User");
 });
 ```
@@ -183,20 +190,33 @@ Import intl helpers from:
 
 ## API summary
 
-| Export | Description |
-| --- | --- |
-| `withApiHandler(handler)` | Wraps route handlers and converts thrown `EndpointError` values to JSON responses. |
-| `payload(schema)` | Reads and validates request JSON with Zod, throws `BadRequestError` on invalid input. |
-| `getRequest()` | Gets current `NextRequest` from AsyncLocalStorage context. |
-| `serializeApiError(error)` | Converts `SerializableError` to transport-safe payload. |
-| `deserializeApiError(data)` | Converts payload back to typed error, or `null` if payload is not recognized. |
-| `isSerializedApiError(data)` | Runtime type-guard for serialized payload shape. |
-| `scanResponseAndThrowErrors(response)` | Scans non-OK responses and rethrows serialized API errors if present. |
-| `apiErrorFactory.register(ctor, deserialize)` | Register custom error classes for round-trip behavior. |
+| Export                                        | Description                                                                           |
+| --------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `withApiHandler(handler)`                     | Wraps route handlers and converts thrown `EndpointError` values to JSON responses.    |
+| `payload(schema)`                             | Reads and validates request JSON with Zod, throws `BadRequestError` on invalid input. |
+| `getRequest()`                                | Gets current `NextRequest` from AsyncLocalStorage context.                            |
+| `serializeApiError(error)`                    | Converts `SerializableError` to transport-safe payload.                               |
+| `deserializeApiError(data)`                   | Converts payload back to typed error, or `null` if payload is not recognized.         |
+| `isSerializedApiError(data)`                  | Runtime type-guard for serialized payload shape.                                      |
+| `scanResponseAndThrowErrors(response)`        | Scans non-OK responses and rethrows serialized API errors if present.                 |
+| `apiErrorFactory.register(ctor, deserialize)` | Register custom error classes for round-trip behavior.                                |
+
+## Coverage
+
+- Latest measured coverage: statements `94.81%`, branches `90.51%`, functions `96.05%`, lines `94.81%`.
+- Generate coverage locally with:
+
+```bash
+pnpm dlx c8 --reporter=text-summary --reporter=text ava --node-arguments='--import=tsx'
+```
+
+- Live docs: https://acominotto.github.io/next-handler/
+- Repository: https://github.com/acominotto/next-handler
 
 ## v0.1.0 release checklist
 
 - `pnpm run build` emits all exported entry points.
 - `pnpm test` passes.
+- Coverage is checked (`c8`) and badges are up to date.
 - README examples match current runtime contracts.
 - `package.json` exports resolve to emitted `dist/` files.
