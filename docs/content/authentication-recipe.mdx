@@ -1,0 +1,44 @@
+---
+title: Add Authentication Filters
+description: Reject unauthenticated requests with a reusable withApiHandler.filter chain.
+category: Security
+tags:
+  - authentication
+  - bearer-token
+  - backend
+difficulty: beginner
+updatedAt: 2026-03-12
+---
+
+Use `withApiHandler.filter()` to centralize auth checks and reuse them across handlers.
+
+```ts
+import { NextResponse } from "next/server";
+import { withApiHandler, UnauthorizedError } from "@ideative/next-handler";
+
+const validateAccessToken = async (token: string) => {
+  if (token !== "demo-token") {
+    throw new UnauthorizedError("Invalid access token");
+  }
+};
+
+const authenticated = withApiHandler.filter(async (req) => {
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.startsWith("Bearer ")
+    ? authHeader.slice("Bearer ".length)
+    : null;
+
+  if (!token) {
+    throw new UnauthorizedError("Missing bearer token");
+  }
+
+  await validateAccessToken(token);
+  return true;
+});
+
+export const GET = authenticated(async () => {
+  return NextResponse.json({ ok: true });
+});
+```
+
+Filter callbacks can throw typed errors (like `UnauthorizedError`) and those still serialize through the same API error contract with `401` status responses.

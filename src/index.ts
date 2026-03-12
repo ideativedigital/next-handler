@@ -81,27 +81,56 @@ export type RouteHandler<Ctx extends Record<string, string> = {}> = (
     context?: RouteContext<Ctx>,
 ) => Promise<NextResponse>;
 
-export function withApiHandler<Ctx extends Record<string, string> = {}>(handler: RouteHandler<Ctx>) {
-    return async (
+type FilterResult = boolean | void | Response | Promise<boolean | void | Response>;
+
+export type RouteFilter<Ctx extends Record<string, string> = {}> = (
+    req: NextRequest,
+    context?: RouteContext<Ctx>,
+) => FilterResult;
+
+export type WithApiHandlerFn = {
+    <Ctx extends Record<string, string> = {}>(handler: RouteHandler<Ctx>): (
         req: NextRequest,
         context?: RouteContext<Ctx>
-    ): Promise<Response> => {
-        return requestStorage.run({ request: req }, async () => {
-            try {
-                return await handler(req, context);
-            } catch (error) {
-                if (error instanceof EndpointError) {
-                    return NextResponse.json(serializeApiError(error), { status: error.status });
+    ) => Promise<Response>;
+    filter(filter: RouteFilter): WithApiHandlerFn;
+};
+
+const createWithApiHandler = (filters: RouteFilter[] = []): WithApiHandlerFn => {
+    const wrap = <Ctx extends Record<string, string> = {}>(handler: RouteHandler<Ctx>) => {
+        return async (
+            req: NextRequest,
+            context?: RouteContext<Ctx>
+        ): Promise<Response> => {
+            return requestStorage.run({ request: req }, async () => {
+                try {
+                    for (const filter of filters) {
+                        const result = await filter(req, context);
+                        if (result instanceof Response) return result;
+                        if (result === false) throw new ForbiddenError("Request blocked by API filter");
+                    }
+                    return await handler(req, context);
+                } catch (error) {
+                    if (error instanceof EndpointError) {
+                        return NextResponse.json(serializeApiError(error), { status: error.status });
+                    }
+                    if (error instanceof SerializableError) {
+                        const body = serializeApiError(error);
+                        return NextResponse.json(body);
+                    }
+                    console.error("Unhandled API error:", error);
+                    return NextResponse.json({ error: "An error occurred" }, { status: 500 });
                 }
-                if (error instanceof SerializableError) {
-                    const body = serializeApiError(error);
-                    return NextResponse.json(body);
-                }
-                console.error("Unhandled API error:", error);
-                return NextResponse.json({ error: "An error occurred" }, { status: 500 });
-            }
-        });
+            });
+        };
     };
-}
+
+    wrap.filter = (filter: RouteFilter): WithApiHandlerFn =>
+        createWithApiHandler([...filters, filter]);
+
+    return wrap;
+};
+
+export const withApiHandler: WithApiHandlerFn = createWithApiHandler();
 
 export const buildApiHandler = () => (handler: RouteHandler) => withApiHandler(handler);

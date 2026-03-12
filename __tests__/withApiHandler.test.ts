@@ -4,9 +4,11 @@ import { z } from "zod";
 import {
   BadRequestError,
   deserializeApiError,
+  ForbiddenError,
   getRequest,
   NotFoundError,
   payload,
+  UnauthorizedError,
   withApiHandler,
 } from "../src/index.js";
 
@@ -160,4 +162,75 @@ test("withApiHandler: handler with context can use slug and throw NotFoundError"
   t.is(data.name, "NotFoundError");
   t.is(data.message, "Post not found");
   t.is((data.details as { resource: string })?.resource, "Post");
+});
+
+test("withApiHandler.filter: false blocks handler with ForbiddenError", async (t) => {
+  const filtered = withApiHandler.filter(() => false);
+  const wrapped = filtered(async () => NextResponse.json({ ok: true }));
+  const req = new NextRequest("http://localhost/api/protected");
+  const res = await wrapped(req);
+  t.is(res.status, 403);
+  const data = await res.json();
+  t.is(data.name, "ForbiddenError");
+  t.is(data.message, "Request blocked by API filter");
+  const restored = deserializeApiError(data);
+  t.assert(restored instanceof ForbiddenError);
+});
+
+test("withApiHandler.filter: filter can throw typed endpoint errors", async (t) => {
+  const authenticated = withApiHandler.filter((req) => {
+    if (!req.headers.get("authorization")) {
+      throw new UnauthorizedError("Missing token");
+    }
+  });
+
+  const wrapped = authenticated(async () => NextResponse.json({ ok: true }));
+  const req = new NextRequest("http://localhost/api/protected");
+  const res = await wrapped(req);
+  t.is(res.status, 401);
+  const data = await res.json();
+  t.is(data.name, "UnauthorizedError");
+  t.is(data.message, "Missing token");
+  const restored = deserializeApiError(data);
+  t.assert(restored instanceof UnauthorizedError);
+});
+
+test("withApiHandler.filter: response return short-circuits handler", async (t) => {
+  const filtered = withApiHandler.filter(() =>
+    NextResponse.json({ skipped: true }, { status: 202 })
+  );
+
+  let handlerCalled = false;
+  const wrapped = filtered(async () => {
+    handlerCalled = true;
+    return NextResponse.json({ ok: true });
+  });
+  const req = new NextRequest("http://localhost/api/protected");
+  const res = await wrapped(req);
+  t.is(res.status, 202);
+  t.false(handlerCalled);
+  const data = await res.json();
+  t.deepEqual(data, { skipped: true });
+});
+
+test("withApiHandler.filter: chained filters run in order", async (t) => {
+  const order: string[] = [];
+  const chained = withApiHandler
+    .filter(() => {
+      order.push("first");
+      return true;
+    })
+    .filter(() => {
+      order.push("second");
+      return true;
+    });
+
+  const wrapped = chained(async () => {
+    order.push("handler");
+    return NextResponse.json({ ok: true });
+  });
+  const req = new NextRequest("http://localhost/api/protected");
+  const res = await wrapped(req);
+  t.is(res.status, 200);
+  t.deepEqual(order, ["first", "second", "handler"]);
 });

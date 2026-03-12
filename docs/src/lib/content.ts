@@ -26,6 +26,8 @@ const modules = import.meta.glob<RecipeModule>("../../content/**/*.mdx", {
 
 const RECIPE_ORDER: string[] = [
   "getting-started",
+  "authentication-recipe",
+  "authorization-recipe",
   "typed-api-errors-recipe",
   "response-scan-recipe",
   "custom-errors-recipe",

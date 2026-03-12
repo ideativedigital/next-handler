@@ -1,6 +1,6 @@
 {
   "name": "@ideative/next-handler",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Next Handler - Simple Next.js handler for API routes",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -47,8 +47,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/acominotto/next-handler"
+    "url": "https://github.com/ideativedigital/next-handler"
   },
+  "bugs": {
+    "url": "https://github.com/ideativedigital/next-handler/issues"
+  },
+  "homepage": "https://ideativedigital.github.io/next-handler/#/recipe/getting-started",
   "author": {
     "name": "Adrien Cominotto",
     "email": "adrien.cominotto@gmail.com",
@@ -88,5 +92,8 @@
     "error",
     "error-handling",
     "error-serialization"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

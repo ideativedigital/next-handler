@@ -1,0 +1,49 @@
+---
+title: Add Authorization Rules
+description: Enforce role or permission checks and return forbidden responses for authenticated users without access.
+category: Security
+tags:
+  - authorization
+  - permissions
+  - roles
+difficulty: intermediate
+updatedAt: 2026-03-12
+---
+
+Throw `ForbiddenError` after authentication when the user lacks permission for the requested action.
+
+```ts
+import { NextResponse } from "next/server";
+import { withApiHandler, ForbiddenError, UnauthorizedError } from "@ideative/next-handler";
+
+type User = { id: string; role: "admin" | "editor" | "viewer" };
+
+const getUserFromRequest = (_req: Request): User => ({
+  id: "u_123",
+  role: "viewer",
+});
+
+const canDeleteProject = (user: User) => user.role === "admin";
+
+const authenticated = withApiHandler.filter((req) => {
+  if (!req.headers.get("authorization")) {
+    throw new UnauthorizedError("Missing token");
+  }
+  return true;
+});
+
+const authorized = authenticated.filter((req) => {
+  const user = getUserFromRequest(req);
+
+  if (!canDeleteProject(user)) {
+    throw new ForbiddenError("You do not have permission to delete this project");
+  }
+  return true;
+});
+
+export const DELETE = authorized(async () => {
+  return NextResponse.json({ deleted: true });
+});
+```
+
+This pattern lets you compose reusable filters (`authenticated.filter(...)`) so routes share the same gatekeeping logic while preserving typed `401`/`403` responses.
