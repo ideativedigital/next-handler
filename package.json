@@ -1,6 +1,6 @@
 {
   "name": "@ideative/next-handler",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Next Handler - Simple Next.js handler for API routes",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

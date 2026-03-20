@@ -1,6 +1,6 @@
 ---
 title: Add Authentication Filters
-description: Reject unauthenticated requests with a reusable withApiHandler.filter chain.
+description: Build request-scoped auth context with withApiHandler.enhance().
 category: Security
 tags:
   - authentication
@@ -10,7 +10,7 @@ difficulty: beginner
 updatedAt: 2026-03-12
 ---
 
-Use `withApiHandler.filter()` to centralize auth checks and reuse them across handlers.
+Use `withApiHandler.enhance()` to resolve auth once per request and read it from AsyncLocalStorage in your handler code.
 
 ```ts
 import { NextResponse } from "next/server";
@@ -22,7 +22,7 @@ const validateAccessToken = async (token: string) => {
   }
 };
 
-const authenticated = withApiHandler.filter(async (req) => {
+const authApiHandler = withApiHandler.enhance(async (req) => {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.startsWith("Bearer ")
     ? authHeader.slice("Bearer ".length)
@@ -33,12 +33,22 @@ const authenticated = withApiHandler.filter(async (req) => {
   }
 
   await validateAccessToken(token);
-  return true;
+  return {
+    user: {
+      id: "u_123",
+      token,
+    },
+  };
 });
 
-export const GET = authenticated(async () => {
-  return NextResponse.json({ ok: true });
+export const GET = authApiHandler(async (_req, context) => {
+  const { user } = authApiHandler.context();
+  return NextResponse.json({
+    ok: true,
+    userId: user.id,
+    sameUserFromContext: context?.user.id,
+  });
 });
 ```
 
-Filter callbacks can throw typed errors (like `UnauthorizedError`) and those still serialize through the same API error contract with `401` status responses.
+Enhancer callbacks can throw typed errors (like `UnauthorizedError`) and those still serialize through the same API error contract with `401` status responses.

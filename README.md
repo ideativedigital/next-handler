@@ -60,6 +60,30 @@ export const GET = withApiHandler(async (req) => {
 });
 ```
 
+### Add request-scoped async context
+
+```ts
+import { NextResponse } from "next/server";
+import { withApiHandler, UnauthorizedError } from "@ideative/next-handler";
+
+const authApiHandler = withApiHandler.enhance(async (req) => {
+  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  if (!token) throw new UnauthorizedError("Missing bearer token");
+
+  const user = { id: "u_123", role: "admin" } as const;
+  return { user };
+});
+
+export const GET = authApiHandler(async (_req, context) => {
+  const { user } = authApiHandler.context();
+  return NextResponse.json({
+    userId: user.id,
+    role: user.role,
+    sameUserFromContext: context?.user.id,
+  });
+});
+```
+
 Built-ins:
 
 - `BadRequestError` (400)
@@ -193,6 +217,7 @@ Import intl helpers from:
 | Export                                        | Description                                                                           |
 | --------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `withApiHandler(handler)`                     | Wraps route handlers and converts thrown `EndpointError` values to JSON responses.    |
+| `withApiHandler.enhance(enhancer)`            | Returns an enhanced handler with `.context()` for request-scoped async ALS context.    |
 | `payload(schema)`                             | Reads and validates request JSON with Zod, throws `BadRequestError` on invalid input. |
 | `getRequest()`                                | Gets current `NextRequest` from AsyncLocalStorage context.                            |
 | `serializeApiError(error)`                    | Converts `SerializableError` to transport-safe payload.                               |

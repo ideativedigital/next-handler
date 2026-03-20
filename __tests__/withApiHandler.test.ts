@@ -234,3 +234,89 @@ test("withApiHandler.filter: chained filters run in order", async (t) => {
   t.is(res.status, 200);
   t.deepEqual(order, ["first", "second", "handler"]);
 });
+
+test("withApiHandler.enhance: context() returns enhanced async context", async (t) => {
+  const enhancedHandler = withApiHandler.enhance(async (req) => ({
+    user: req.headers.get("x-user") ?? "anonymous",
+  }));
+
+  const wrapped = enhancedHandler(async (_req, routeContext) => {
+    const enhancedContext = enhancedHandler.context();
+    return NextResponse.json({
+      user: enhancedContext.user,
+      userFromRouteContext: routeContext?.user,
+    });
+  });
+
+  const req = new NextRequest("http://localhost/api/me", {
+    headers: { "x-user": "alice" },
+  });
+  const res = await wrapped(req);
+  t.is(res.status, 200);
+  const data = await res.json();
+  t.deepEqual(data, { user: "alice", userFromRouteContext: "alice" });
+});
+
+test("withApiHandler.enhance: context() outside handler throws", (t) => {
+  const enhancedHandler = withApiHandler.enhance(async () => ({ user: "alice" }));
+  t.throws(() => enhancedHandler.context(), {
+    message: /Enhanced async context not available/,
+  });
+});
+
+test("withApiHandler.enhance: enhancer can derive context from route params", async (t) => {
+  const enhancedHandler = withApiHandler.enhance(async (_req, context) => {
+    const params = await context?.params;
+    return { slugFromEnhancer: params?.["slug"] ?? "unknown" };
+  });
+
+  const wrapped = enhancedHandler<{ slug: string }>(async (_req, context) => {
+    const params = await context?.params;
+    const enhanced = enhancedHandler.context();
+    return NextResponse.json({
+      slug: params?.slug,
+      slugFromEnhancer: enhanced.slugFromEnhancer,
+      slugFromRouteContext: context?.slugFromEnhancer,
+    });
+  });
+
+  const req = new NextRequest("http://localhost/api/posts/my-post");
+  const routeContext = { params: Promise.resolve({ slug: "my-post" }) };
+  const res = await wrapped(req, routeContext);
+  t.is(res.status, 200);
+  const data = await res.json();
+  t.deepEqual(data, {
+    slug: "my-post",
+    slugFromEnhancer: "my-post",
+    slugFromRouteContext: "my-post",
+  });
+});
+
+test("withApiHandler.enhance: filters receive enhanced context merged with route context", async (t) => {
+  const observed: string[] = [];
+  const enhancedHandler = withApiHandler.enhance(async (_req, context) => {
+    const params = await context?.params;
+    return { userId: `user:${params?.["slug"] ?? "none"}` };
+  });
+
+  const filtered = enhancedHandler.filter(async (_req, context) => {
+    const params = (await context?.params) as Record<string, string> | undefined;
+    observed.push(context?.userId ?? "missing-user");
+    observed.push(params?.["slug"] ?? "missing-slug");
+    return true;
+  });
+
+  const wrapped = filtered<{ slug: string }>(async (_req, context) => {
+    const params = await context?.params;
+    return NextResponse.json({ userId: context?.userId, slug: params?.slug });
+  });
+
+  const req = new NextRequest("http://localhost/api/posts/my-post");
+  const routeContext = { params: Promise.resolve({ slug: "my-post" }) };
+  const res = await wrapped(req, routeContext);
+
+  t.is(res.status, 200);
+  const data = await res.json();
+  t.deepEqual(data, { userId: "user:my-post", slug: "my-post" });
+  t.deepEqual(observed, ["user:my-post", "my-post"]);
+});
